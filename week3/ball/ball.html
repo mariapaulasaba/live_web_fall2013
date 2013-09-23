@@ -1,0 +1,111 @@
+<html>
+	<head>
+		<!--<script type="text/javascript" src="http://localhost:8080/socket.io/socket.io.js"></script>-->
+		<script type="text/javascript">
+	
+			// RequestAnimFrame: a browser API for getting smooth animations
+			window.requestAnimFrame = (function(){
+			  return  window.requestAnimationFrame       || 
+					  window.webkitRequestAnimationFrame || 
+					  window.mozRequestAnimationFrame    || 
+					  window.oRequestAnimationFrame      || 
+					  window.msRequestAnimationFrame     ||  
+					  function( callback ){
+						window.setTimeout(callback, 1000 / 60);
+					  };
+			})();
+
+
+			
+
+			var canvas;
+			var context;	
+
+			var xpos = 0;
+			var ypos = 0;
+			var balls = [];
+
+			var initcanvas = function() {
+				console.log("init");
+				canvas = document.getElementById('mycanvas');
+				context = canvas.getContext('2d');
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+			
+				context.fillStyle="#000";
+				context.fillRect(0,0,canvas.width,canvas.height);	
+				
+				canvas.addEventListener('mousemove', function(evt) {								
+					var mousePos = getMousePosition(canvas, evt);
+					xpos = mousePos.x;
+					ypos = mousePos.y;  		
+					//console.log("mousemove x:" + xpos + " y:" + ypos);
+
+				}, false);			
+
+				createBall();
+
+				animloop();	
+			};
+				
+
+
+			function Ball(x,y){
+				this.x = x || 0;
+				this.y = y || 0;
+				this.easing = 0.08;
+			}	
+
+			function createBall(){
+				balls.push(new Ball(0,0));
+			}
+			
+			Ball.prototype.move = function(){				
+				if (!isNaN(xpos)) {
+					this.x = this.x + (xpos - this.x)*0.08;
+					this.y = this.y + (ypos - this.y)*0.08;
+				}				
+			}
+
+
+			Ball.prototype.draw = function(){
+				context.beginPath();
+			    context.arc(this.x, this.y, 50, 0, 2 * Math.PI, false);
+			    context.fillStyle = 'green';
+			    context.fill();
+			    context.closePath();
+			}
+
+
+
+			var draw = function() {
+				//background
+				context.fillStyle = "black";
+				context.fillRect(0, 0, canvas.width, canvas.height);					
+				
+				balls[0].move();
+				balls[0].draw();
+				//console.log(ball.x);
+
+			};
+
+
+			function animloop(){
+				draw();
+				requestAnimFrame(animloop);
+			}
+
+			function getMousePosition(canvas, event) {
+				var rect = canvas.getBoundingClientRect();
+				return {
+					x: event.clientX - rect.left,
+					y: event.clientY - rect.top
+				};
+			}
+
+		</script>	
+	</head>
+	<body onload="initcanvas();">
+		<canvas id="mycanvas" />
+	</body>
+</html>

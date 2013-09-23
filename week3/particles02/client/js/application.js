@@ -1,6 +1,7 @@
-var socket = io.connect('http://192.168.0.11:8080/');
+var socket = io.connect('http://localhost:8080/');
 var myEmitter;
 socket.on('connect', function() {
+	connected = true;
 	myEmitter = createEmitter();
 	socket.emit('createEmitter', myEmitter);
 });

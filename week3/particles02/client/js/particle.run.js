@@ -15,6 +15,8 @@ var particles = [];
 var midX = canvas.width / 2;
 var midY = canvas.height / 2; 
 
+var connected = false;
+
 // Add one emitter located at `{ x : 100, y : 230}` from the origin (top left)
 // that emits at a velocity of `2` shooting out from the right (angle `0`)
 //var emitters = [new Emitter(new Vector(midX - 150, midY), Vector.fromAngle(0, 2))];
@@ -163,7 +165,10 @@ canvas.addEventListener('mousemove', function(evt) {
 	var mousePos = getMousePosition(canvas, evt);
 	//emitters[0].setPosition(mousePos.x, mousePos.y);
 	//fields[0].setPosition(mousePos.x, mousePos.y);
-  sendmouse(mousePos.x, mousePos.y, myEmitter.id);
+  if(connected){
+  emitters[myEmitter.id].setPosition(mousePos.x, mousePos.y);
+  sendmouse(mousePos.x, mousePos.y, myEmitter.id); 
+  } 
 
 
 }, false);

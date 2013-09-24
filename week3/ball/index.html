@@ -1,30 +1,57 @@
 <html>
 	<head>
-		<script type="text/javascript" src="http://localhost:8080/socket.io/socket.io.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+
+	</head>
+	<body onload="initcanvas();">
+		<canvas id="mycanvas" />
+
 		<script type="text/javascript">
 	
-			var socket = io.connect('http://localhost:8080/');
+			var socket = io.connect('http://ec2-54-200-31-246.us-west-2.compute.amazonaws.com:8080/');
+			var connected = false;
+
+			var myBall;
+
 
 			socket.on('connect', function() {
-				//socket.emit('createBall', myBall);
+				console.log('connected');
+				connected = true;
+				socket.emit('createBall', function(){});
 			});
 
-			socket.on('sendmouse', function(data)){
 
-				
-			}
+
+			socket.on('sendmouse', function(data){
+				balls[data.id].xgoal = data.x;
+				balls[data.id].ygoal = data.y;
+			});
 
 			socket.on('createBall', function(data){
+				if(!data || data === myBall) return;
+				//console.log('created someone else ball');
+				createBall(data);
 
-				//if(!data || data.id === myEmitter.id) return;
-				//createEmitter(data.x, data.y, data.id, data.angle);
+			});
+
+			socket.on('myBall', function(data){
+			   //console.log('created my ball with id:'+data);
+			   myBall = data;
+			   createBall(myBall);
 			});
 
 			socket.on('destroyBall', function(data){
-				//destroyEmitter(data.id);
+				destroyBall(data);
 			});
 
-
+			var sendmouse = function(xval, yval){
+				if(!connected) {
+					console.log("not connected yet");
+					return;
+				}
+				//console.log("sendmouse: " + xval + " " + yval);
+				socket.emit('sendmouse',{ x: xval, y: yval, id: myBall });
+			};
 
 			// RequestAnimFrame: a browser API for getting smooth animations
 			window.requestAnimFrame = (function(){
@@ -34,7 +61,7 @@
 					  window.oRequestAnimationFrame      || 
 					  window.msRequestAnimationFrame     ||  
 					  function( callback ){
-						window.setTimeout(callback, 1000 / 60);
+					  window.setTimeout(callback, 1000 / 60);
 					  };
 			})();
 
@@ -61,7 +88,12 @@
 				canvas.addEventListener('mousemove', function(evt) {								
 					var mousePos = getMousePosition(canvas, evt);
 					xpos = mousePos.x;
-					ypos = mousePos.y;  		
+					ypos = mousePos.y;  	
+
+					if(balls[myBall]){
+						balls[myBall].xgoal = xpos;
+						balls[myBall].ygoal = ypos;
+					}
 					//console.log("mousemove x:" + xpos + " y:" + ypos);
 
 				}, false);			
@@ -76,16 +108,30 @@
 				this.x = x || 0;
 				this.y = y || 0;
 				this.easing = 0.08;
+				this.xgoal = 0;
+				this.ygoal = 0;
+
 			}	
 
-			function createBall(){
+			function createBall(id){
+				var _id = id;
 				balls.push(new Ball(0,0));
+				//console.log('created ball with id: ' +_id)
+				return {id: _id}; 
+
+			}
+
+			function destroyBall(id){		
+				balls.splice(id, 1);	
+				console.log('deleted ball');
+				return;
 			}
 			
-			Ball.prototype.move = function(){				
+			Ball.prototype.move = function(){	
+
 				if (!isNaN(xpos)) {
-					this.x = this.x + (xpos - this.x)*0.08;
-					this.y = this.y + (ypos - this.y)*0.08;
+					this.x = this.x + (this.xgoal - this.x)*0.08;
+					this.y = this.y + (this.ygoal - this.y)*0.08;
 				}				
 			}
 
@@ -105,13 +151,18 @@
 				context.fillStyle = "black";
 				context.fillRect(0, 0, canvas.width, canvas.height);					
 				
-				balls[0].move();
-				balls[0].draw();
+
+				for(var i = 0; i < balls.length; i++){
+				balls[i].move();
+				balls[i].draw();					
+				}
+
 				//console.log(ball.x);
 
 			};
 
 			function animloop(){
+				sendmouse(xpos, ypos);
 				draw();
 				requestAnimFrame(animloop);
 			}
@@ -129,8 +180,5 @@
 
 
 		</script>	
-	</head>
-	<body onload="initcanvas();">
-		<canvas id="mycanvas" />
 	</body>
 </html>

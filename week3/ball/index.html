@@ -17,9 +17,8 @@
 			socket.on('connect', function() {
 				console.log('connected');
 				connected = true;
-				socket.emit('createBall', function(){});
-			});
 
+			});
 
 
 			socket.on('sendmouse', function(data){
@@ -32,12 +31,18 @@
 				//console.log('created someone else ball');
 				createBall(data);
 
+				console.log('created ball with id: '+data);
+
+
 			});
 
 			socket.on('myBall', function(data){
 			   //console.log('created my ball with id:'+data);
 			   myBall = data;
 			   createBall(myBall);
+			   socket.emit('createBall', myBall);
+
+			   console.log('created my Ball with id: '+myBall);
 			});
 
 			socket.on('destroyBall', function(data){

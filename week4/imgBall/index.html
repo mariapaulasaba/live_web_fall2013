@@ -40,7 +40,6 @@
 			    myId = data.id;
 			    createImage(data.url , myId);
 			    socket.emit('createImage', data);
-
 			    console.log('created my image with id: '+myId);
 			 });
 
@@ -87,6 +86,23 @@
 				context.fillStyle="#000";
 				context.fillRect(0,0,canvas.width,canvas.height);	
 				
+				var fileElement = document.getElementById('fileinput');
+				fileElement.onchange = function() {
+					fileReader = new FileReader();
+					fileReader.onload = function(evt){
+        					//alert(evt.target.result);
+        					//evt.target.result contains the image in base64 format
+				        	//send the image via Socket.io
+				        	console.log('will send image');
+				        	socket.emit('sendImage', evt.target.result);
+    					};
+					
+					file = fileElement.files[0];  //fileElement.files is an array of all of the selected files
+					fileReader.readAsDataURL(file);
+				};
+
+
+
 				canvas.addEventListener('mousemove', function(evt) {								
 					var mousePos = getMousePosition(canvas, evt);
 					xpos = mousePos.x;
@@ -98,31 +114,17 @@
 							images[i].ygoal = ypos;
 						}
 					}
-				}, false);			
-
-				var fileElement = document.getElementById('fileinput');
-				fileElement.onchange = function() {
-					fileReader = new FileReader();
-					fileReader.onload = function(evt){
-        					//alert(evt.target.result);
-        					//evt.target.result contains the image in base64 format
-				        	//send the image via Socket.io
-				        	socket.emit('sendImage', evt.target.result);
-    					};
-					
-					file = fileElement.files[0];  //fileElement.files is an array of all of the selected files
-					fileReader.readAsDataURL(file);
-				};
+				}, false);
 
 				animloop();	
 			};
 				
 
 
-			function Image(url, id){
+			function Img(url, id){
 				this.x = 0;
 				this.y = 0;
-				this.easing = 0.08;
+				this.easing = Math.random();
 				this.xgoal = 0;
 				this.ygoal = 0;
 				this.id = id;
@@ -135,7 +137,7 @@
 			function createImage(url, id){
 				var _id = id;
 				var _url = url;
-				images.push(new Image(url, id));
+				images.push(new Img(url, id));
 				return;
 			}
 
@@ -151,23 +153,18 @@
 				
 			}
 			
-			Image.prototype.move = function(){	
+			Img.prototype.move = function(){	
 
 				if (!isNaN(xpos)) {
-					this.x = this.x + (this.xgoal - this.x)*0.08;
-					this.y = this.y + (this.ygoal - this.y)*0.08;
+					this.x = this.x + (this.xgoal - this.x)*this.easing;
+					this.y = this.y + (this.ygoal - this.y)*this.easing;
 				}				
 			}
 
 
-			Image.prototype.draw = function(image){
-				context.beginPath();
-			    context.arc(this.x, this.y, 50, 0, 2 * Math.PI, false);
-			    context.fillStyle = 'green';
-			    context.fill();
-			    context.closePath();
+			Img.prototype.draw = function(image){
 
-			    context.drawImage(img, this.x, this.y, 100, 100);
+			    context.drawImage(this.img, this.x, this.y, 100, 100);
 
 			}
 

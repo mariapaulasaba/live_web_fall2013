@@ -4,15 +4,13 @@
 
 	</head>
 	<body onload="initcanvas();">
+		<input type="file" name="fileinput" id="fileinput">
 		<canvas id="mycanvas" />
-
 		<script type="text/javascript">
 	
-			var socket = io.connect('http://ec2-54-200-31-246.us-west-2.compute.amazonaws.com:8080/');
-			//var socket = io.connect('http://localhost:8080/');
-			
+			//var socket = io.connect('http://ec2-54-200-31-246.us-west-2.compute.amazonaws.com:8080/');
+			var socket = io.connect('http://localhost:8080/');
 			var connected = false;
-
 			var myId;
 
 
@@ -24,32 +22,30 @@
 
 
 			socket.on('sendmouse', function(data){
-				for(var i = 0; i < balls.length; i++){
-					if(balls[i].id === data.id){
-						balls[i].xgoal = data.x;
-						balls[i].ygoal = data.y;
+				for(var i = 0; i < images.length; i++){
+					if(images[i].id === data.id){
+						images[i].xgoal = data.x;
+						images[i].ygoal = data.y;
 					}	
 				}
 			});
 
-			socket.on('createBall', function(data){
-				if(!data || data === myId) return;
-				createBall(data);
-				console.log('created ball with id: '+data);
+			socket.on('createImage', function(data){
+				if(!data || data.id === myId) return;
+				createImage(data.url, data.id);
+				console.log('created image ith id: '+data);
 			});
 
-			socket.on('myBall', function(data){
-			   //console.log('created my ball with id:'+data);
-			   myId = data;
-			   createBall(myId);
-			   socket.emit('createBall', myId);
+			 socket.on('myImage', function(data){
+			    myId = data.id;
+			    createImage(data.url , myId);
+			    socket.emit('createImage', data);
 
-			   console.log('created my Ball with id: '+myId);
-			});
+			    console.log('created my image with id: '+myId);
+			 });
 
-			socket.on('destroyBall', function(data){
-				//console.log('received destroyrequest for id:' + data);
-				destroyBall(data);
+			socket.on('destroyImage', function(data){
+				destroyImage(data);
 			});
 
 			var sendmouse = function(xval, yval){
@@ -57,9 +53,9 @@
 					console.log("not connected yet");
 					return;
 				}
-				//console.log("sendmouse: " + xval + " " + yval);
 				socket.emit('sendmouse',{ x: xval, y: yval, id: myId });
 			};
+
 
 			// RequestAnimFrame: a browser API for getting smooth animations
 			window.requestAnimFrame = (function(){
@@ -74,14 +70,12 @@
 			})();
 
 
-			
-
 			var canvas;
 			var context;	
 
 			var xpos = 0;
 			var ypos = 0;
-			var balls = [];
+			var images = [];
 
 			var initcanvas = function() {
 				console.log("init");
@@ -98,54 +92,66 @@
 					xpos = mousePos.x;
 					ypos = mousePos.y;  	
 
-					for(var i = 0; i < balls.length; i++){
-						if(balls[i].id === myId){						
-							balls[i].xgoal = xpos;
-							balls[i].ygoal = ypos;
+					for(var i = 0; i < images.length; i++){
+						if(images[i].id === myId){						
+							images[i].xgoal = xpos;
+							images[i].ygoal = ypos;
+						}
 					}
-				}
-
-					//console.log("mousemove x:" + xpos + " y:" + ypos);
-
 				}, false);			
 
+				var fileElement = document.getElementById('fileinput');
+				fileElement.onchange = function() {
+					fileReader = new FileReader();
+					fileReader.onload = function(evt){
+        					//alert(evt.target.result);
+        					//evt.target.result contains the image in base64 format
+				        	//send the image via Socket.io
+				        	socket.emit('sendImage', evt.target.result);
+    					};
+					
+					file = fileElement.files[0];  //fileElement.files is an array of all of the selected files
+					fileReader.readAsDataURL(file);
+				};
 
 				animloop();	
 			};
 				
 
 
-			function Ball(x,y,id){
-				this.x = x || 0;
-				this.y = y || 0;
+			function Image(url, id){
+				this.x = 0;
+				this.y = 0;
 				this.easing = 0.08;
 				this.xgoal = 0;
 				this.ygoal = 0;
 				this.id = id;
 
+				this.img = new Image();
+				this.img.src = url;
+
 			}	
 
-			function createBall(id){
+			function createImage(url, id){
 				var _id = id;
-				balls.push(new Ball(0,0, id));
-				//console.log('created ball with id: ' +_id)
-				//return {id: _id}; 
+				var _url = url;
+				images.push(new Image(url, id));
 				return;
 			}
 
-			function destroyBall(id){		
+			function destroyImage(id){		
 				
-				for(var i = 0; i < balls.length; i++){
-					if(balls[i].id === id){
-					  	balls.splice(i, 1);
-						console.log('deleted ball with id '+id);
+				for(var i = 0; i < images.length; i++){
+					if(images[i].id === id){
+					  	images.splice(i, 1);
+						console.log('deleted image with id '+id);
 						}
 					}
 				return;
 				
 			}
 			
-			Ball.prototype.move = function(){	
+			Image.prototype.move = function(){	
 
 				if (!isNaN(xpos)) {
 					this.x = this.x + (this.xgoal - this.x)*0.08;
@@ -154,12 +160,15 @@
 			}
 
 
-			Ball.prototype.draw = function(){
+			Image.prototype.draw = function(image){
 				context.beginPath();
 			    context.arc(this.x, this.y, 50, 0, 2 * Math.PI, false);
 			    context.fillStyle = 'green';
 			    context.fill();
 			    context.closePath();
+
+			    context.drawImage(img, this.x, this.y, 100, 100);
+
 			}
 
 
@@ -170,13 +179,10 @@
 				context.fillRect(0, 0, canvas.width, canvas.height);					
 				
 
-				for(var i = 0; i < balls.length; i++){
-				balls[i].move();
-				balls[i].draw();					
+				for(var i = 0; i < images.length; i++){
+				images[i].move();
+				images[i].draw();					
 				}
-
-				//console.log(ball.x);
-
 			}
 
 			function animloop(){
@@ -198,5 +204,7 @@
 
 
 		</script>	
+
+
 	</body>
 </html>

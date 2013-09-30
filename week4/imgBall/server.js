@@ -36,17 +36,20 @@ io.sockets.on('connection',
 	function (socket) {
 		users[users.length] = socket.id;
 
-		socket.emit('myBall', socket.id);
+		//socket.emit('myImage', socket.id);
 
 		for(var i = 0; i < users.length; i++){
-		   socket.emit('createBall', users[i]);	
-		   //console.log('created bal with id '+clientId);
+		   socket.emit('createImage', users[i]);	
 		}
 
+		socket.on('sendImage', function(data){
+			var _url = data;
+			socket.emit('myImage', {url:_url, id:socket.id});
 
-		//console.log("We have a new client: " + socket.id);
-		socket.on('createBall', function(data){
-			socket.broadcast.emit('createBall', data);
+		});
+
+		socket.on('createImage', function(data){
+			socket.broadcast.emit('createImage', data);
 		});
 
 		socket.on('sendmouse', function(data){
@@ -56,7 +59,7 @@ io.sockets.on('connection',
 		socket.on('disconnect', function() {
 			console.log("Client has disconnected " + socket.id);
 			for(var i = 0; i < users.length; i++){
-			socket.broadcast.emit('destroyBall', socket.id);
+			socket.broadcast.emit('destroyVideo', socket.id);
 			users.splice[socket.id,1];
 			}
 		});

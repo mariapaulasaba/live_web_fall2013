@@ -3,7 +3,10 @@
 			var frequencies = null;
 			var analyser = null;
 			var volumeDegree = 0;
-		
+			var volume = 0;
+			var images = [];
+
+
 					
 			var init = function() {
 				console.log("init");
@@ -12,6 +15,14 @@
 				window.URL = window.URL || window.webkitURL || window.mozURL || window.msURL;
 				navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 				navigator.getUserMedia({audio: true}, webRTCInit, function(error) {alert(error);});
+
+				for(var i = 1; i < 7; i++){
+					var imageObj = new Image(); // new instance for each image
+    				imageObj.src = "img/"+i+".jpg";
+    				images.push(imageObj);
+    				console.log(imageObj);
+				}
+				
 			};
 			
 			var webRTCInit = function(stream) {
@@ -39,17 +50,12 @@
 				audioSource.connect(analyser);
 				frequencies = new Uint8Array(analyser.frequencyBinCount);
 				analyser.getByteFrequencyData(frequencies);
-				
-				for (var i = 0; i < frequencies.length; i++)
-				{
-					console.log(frequencies[i]);
-				}
-				window.requestAnimationFrame(animate);
+
+				animate();
 			};
 
+			var drawGraph = function(){
 
-			var animate = function() {
-				
 				//first, let's draw the graph
 				analyser.getByteFrequencyData(frequencies);
 				var graph = document.getElementById('graph');
@@ -67,38 +73,56 @@
 
 				//this is for changing the progress bar according to volume
 				var bar = document.getElementById('volumeValue');
-				var volume = volumeDegree/2;
+				volume = volumeDegree/2;
 				var volumeSt = volume +"%"
 				bar.style.width = volumeSt;
 
+
+
+			};
+
+
+
+
+			var pumpkin = function() {
+				
+			
 				//now, let's draw the character
 				var mycanvas = document.getElementById('character');
 				var mycontextCanvas = mycanvas.getContext('2d');
 				mycanvas.width = 580;
 				mycanvas.height = 420;
-
-
 				mycontextCanvas.clearRect(0,0,mycanvas.width, mycanvas.height);
 
-				var img=document.getElementById('4');
 
-				 if(volume < 20){
-				 img=document.getElementById('4');
-				 }
-				 else if(volume >= 20 && volume < 40){
-				 img=document.getElementById('3');
-				 }
-				else if(volume >= 40 && volume < 60){
-				img=document.getElementById('2');
+				var range = [{min:0, max:10, frame:"1"}, 
+				{min:10, max:20, frame:"2"}, {min:20, max:40, frame:"3"},
+				{min:40, max:60, frame:"4"}, {min:60, max:80, frame:"5"},				
+				{min:80, max:10000, frame:"6"}];
+
+				var img;
+				for(var i = 0; i < range.length; i++){
+				var item = range[i];
+				if(volume >= item.min && volume < item.max){
+					img = i;
+					break;
+					}
+				else{
+					img = range.length-1;
 				}
-				else if(volume >= 60 && volume < 80){
-				img=document.getElementById('1');
-			 }
+				}
 
-				mycontextCanvas.drawImage(img, mycanvas.width/2-50, mycanvas.height/2-50);
-				window.requestAnimationFrame(animate);	
+				mycontextCanvas.drawImage(images[img], 0, 0);
+
 
 			};
+
+			var animate = function(){
+				drawGraph();
+				pumpkin();
+				window.requestAnimationFrame(animate);	
+			};
 			
+
 			window.addEventListener('load', init, false);
 		

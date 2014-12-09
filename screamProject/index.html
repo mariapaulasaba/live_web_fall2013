@@ -7,8 +7,9 @@
 	<link href="css/bootstrap.css" rel="stylesheet">
 	<link href="css/style.css" rel="stylesheet">
 	<link href='http://fonts.googleapis.com/css?family=Creepster' rel='stylesheet' type='text/css'>
-	<script src="js/application.js" rel="text/javascript"></script>
-
+<script src="/socket.io/socket.io.js"></script>
+	<script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+	<script src="http://itp.nyu.edu/~hj657/liveweb/js/application_arranged.js" rel="text/javascript"></script>
 </head>
 
 
@@ -19,25 +20,24 @@
 		<h3>Scare-o-meter</h1>
 		<div class="progress"><span id="volumeValue"></span></div>
 		<canvas id="character" style="border:1px solid #FFF;"></canvas>
-		<aside><p>Players list</p>
-			<!--<ul>
-				<li>
-					<img src="#"/>
-					User 1
-				</li>
-				<li>
-					<img src="#"/>
-					User 1
-				</li>
-				<li>
-					<img src="#"/>
-					User 1
-				</li>
-			</ul>-->
+		<aside>
+			<form class="form-inline">
+				 <div class="form-group">
+				
+				<input name="username" class="form-control" id="username" type="text"  maxlength="15" style="width:75px;" placeholder="UserName">
+				<input type="button" value="join"class="btn btn-warning" id="joinbtn"  onclick="sendPeerId();">
+			</div>
+			</form>
+
+			<ul id="userlist">
+				
+			</ul>
 		</aside>
-		<footer><button type="button">Go!</button>
+		<footer><button type="button" id="gobtn" onclick="startGame();recordMe();">Go!</button>
+		<!--<button type="button" id="testbtn" onclick=""> Start!</button>-->
 		<canvas id="graph"></canvas>
 	</footer>
+	<audio id="myaudio"></audio>
 	</div>
 </body>
 
